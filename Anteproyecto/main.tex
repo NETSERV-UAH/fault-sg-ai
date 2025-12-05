@@ -1,0 +1,38 @@
+\documentclass{article}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{svg}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{vmargin}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\hypersetup{
+    colorlinks,
+    linkcolor={blue!80!},
+    citecolor={blue!80!},
+    urlcolor={blue!80!}
+}
+\usepackage{verbatim} 
+\usepackage{cite}
+\usepackage{pgfgantt}
+\setmargins{2.5cm}       
+{1.5cm}                       
+{16.5cm}                    
+{23.42cm}            
+{12pt}                 
+{1cm}                           
+{0pt} 
+{2cm} 
+
+\begin{document}
+
+\input{portada.tex} 
+\input{body.tex}
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{Anteproyecto_bib}
+
+
+\end{document}

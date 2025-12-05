@@ -1,0 +1,148 @@
+\chapter{Anexo II - Presupuesto}
+
+Este anexo pretende estimar el presupuesto que sería necesario para llevar el proyecto a cabo. Por ello, se cuantifican las horas efectivas dedicadas al \gls{tfm} y se establecen los costes, en base a los medios \textit{hardware} y \textit{software} empleados y a la mano de obra.
+%dado que, si bien es cierto que el TFM se ha extendido el doble del tiempo que se había estimado, no se ha dedicado el doble de semanas para la realización del mismo, dado que se ha ido compaginando con otros proyectos en paralelo 
+
+\section{Duración del proyecto}
+
+Para obtener el número de horas de trabajo por semana del presente proyecto en \textbf{promedio} se aporta un diagrama de Gantt en la Figura \ref{gantt}, en el que se puede apreciar cómo se han distribuido las tareas a lo largo del tiempo. Como aclaración, la duración del proyecto se ha extendido en el tiempo varias semanas más de lo que se había previsto e indicado en el anteproyecto. Principalmente, esto es porque se ha requerido un diseño y procesamiento exhaustivo de los datos para obtener el conjunto final sobre el que desarrollar y entrenar los diferentes modelos. Como se puede ver, en la Figura \ref{gantt} se reflejan las etapas críticas del proyecto, que vienen dadas por las de diseño de datos y de desarrollo de los modelos de \gls{ml} y \gls{dl}. 
+
+\vspace{3mm}
+
+Teniendo en cuenta esta distribución temporal, en la Tabla \ref{dig:horasTrabajadas} se estima de forma aproximada el total de horas dedicadas al \gls{tfm} y, por ende, el número de horas efectivas por semana en \textbf{promedio}.
+
+\vspace{3mm}
+
+\begin{table}[ht!]
+    \centering
+    \begin{tabular}{|c|c|c|}
+    \hline
+    \rowcolor[HTML]{EFEFEF}
+    \textbf{Número de horas totales} & \textbf{Horas efectivas} & \textbf{Horas efectivas por semana} \\ \hline
+                    600h      & $\approx$ 390-520h   &     $\approx$         15-20h             \\ \hline
+    \end{tabular}
+    \caption{Promedio de horas de trabajo }
+    \label{dig:horasTrabajadas}
+\end{table}
+
+% \begin{sidewaysfigure}[ht!]
+%  	\begin{center}
+%  		\begin{tikzpicture}
+%  			\begin{ganttchart}[
+%  					hgrid,
+%  					vgrid,
+%  					y unit chart=.75cm,
+%  					bar/.append style={fill=cyan!50},
+%  					expand chart=\textwidth
+%  				]{1}{30}
+%  				\gantttitle{Quincenas}{30} \\
+%  				\gantttitlelist{1,...,30}{1} \\
+%  				\ganttbar{Documentación y estudio}{1}{6.5} \\
+%  				\ganttbar{Planificación}{1}{6.5} \ganttnewline
+%  				\ganttbar{Diseno del entorno}{3}{13} \ganttnewline
+%  				\ganttbar{Instalación del entorno}{6.5}{16} \ganttnewline
+%  				\ganttbar{Aprendizaje de las herramientas}{6.5}{18} \ganttnewline
+%  				\ganttbar{Desarrollo}{15}{25} \ganttnewline
+%  				\ganttbar{Despliegue del entorno}{22}{25} \ganttnewline
+%  				\ganttbar{Valoración del desarrollo}{25}{26} \\
+%  				\ganttbar{Informe final}{26}{30}
+%  			\end{ganttchart}
+%  		\end{tikzpicture}
+%  	\end{center}
+%  	\caption{Diagrama de Gantt del proyecto}
+%  	\label{gantt}
+% \end{sidewaysfigure}
+
+
+\begin{sidewaysfigure}[ht!]
+    \begin{center}  
+        \begin{tikzpicture}  
+            \begin{ganttchart}[
+                hgrid,
+                vgrid,
+                y unit chart=.75cm,
+                bar/.append style={fill=cyan!50},
+                expand chart=\textwidth
+                ]{1}{26}
+            \gantttitle{Semanas}{26} \\
+            \gantttitlelist{1,...,26}{1} \\
+            \ganttbar{Documentación y estudio}{1}{6} \\
+            \ganttbar{Planificación}{1}{6} \ganttnewline
+            \ganttbar{Análisis y tratamiento de datos}{6}{16} \ganttnewline
+            \ganttbar{Elaboración de escenarios}{16}{19} \ganttnewline
+            \ganttbar{Simulación}{18}{19} \ganttnewline
+            \ganttbar{Desarrollo y entrenamiento de modelos}{19}{24} \ganttnewline
+            \ganttbar{Análisis de efectividad}{21}{24} \ganttnewline
+            \ganttbar{Informe final}{20}{26}
+            \end{ganttchart}  
+ 		\end{tikzpicture}  
+    \end{center}
+    \caption{Diagrama de Gantt del proyecto}
+    \label{gantt}
+\end{sidewaysfigure}
+
+\section{Costes del proyecto}
+
+En cuanto al cálculo de los costes del proyecto, se aplica una diferenciación en términos del \textit{hardware}, del \textit{software} y de la mano de obra que se necesita. De esta forma, se pueden desglosar de forma detallada los costes y, por tanto, aportar de forma aproximada la cuantía total del proyecto. Esto es importante para garantizar una consideración adecuada de todos los recursos que se requieren para desarrollar de forma exitosa el proyecto.
+
+\vspace{3mm}
+
+Por un lado, se pone el foco en los costes asociados al \textit{hardware} (ver Tabla \ref{tab:costesHardware}) y al \textit{software} (ver Tabla \ref{tab:costesSoftware}). En el caso del primero, se requiere evaluar todos los equipos o dispositivos que han sido necesarios para desarrollar el \gls{tfm}, mientras que para el segundo, es preciso tener en cuenta el gasto anual que suponen las licencias o paquetes de software empleados. 
+
+\vspace{3mm}
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|c|r|}
+		\hline
+		\rowcolor[HTML]{EFEFEF}
+		Producto (IVA incluido) & \multicolumn{1}{c|}{\cellcolor[HTML]{EFEFEF}Valor (€)} \\ \hline
+		Ordenador portátil HP EliteBook 640 G9 & 1296,00  \\ \hline
+		Servidor A & 2100,00 \\ \hline
+		Servidor B & 1700,00 \\ \hline
+	\end{tabular}
+	\caption{Presupuesto desglosado del hardware para el \glsentryshort{tfm}}
+	\label{tab:costesHardware}
+\end{table}
+
+\vspace{1mm}
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|c|r|}
+		\hline
+		\rowcolor[HTML]{EFEFEF}
+		Producto (IVA incluido) & \multicolumn{1}{c|}{\cellcolor[HTML]{EFEFEF}Valor (€)} \\ \hline
+		Microsoft Office & 300,00 \\ \hline
+	\end{tabular}
+	\caption{Presupuesto desglosado del software para el \glsentryshort{tfm}}
+	\label{tab:costesSoftware}
+\end{table}
+
+\vspace{3mm}
+
+Por otro lado, se estiman los costes de mano de obra o, en otros términos, los gastos relacionados con los recursos humanos que se han involucrado en el proyecto. Para ello, se emplea como referencia el salario promedio de un ingeniero junior y se cuantifica el total a partir del número de horas totales dedicadas al \gls{tfm}. 
+
+\vspace{3mm}
+
+Una vez desglosados los costes diferenciados, se presenta en la Tabla \ref{tab:budget} el presupuesto total de desarrollo del proyecto. Cabe destacar que todos los cálculos expresados se basan en las referencias proporcionadas y pueden ser ajustados según los requerimientos específicos del proyecto, así como los precios aplicables a cada caso particular.
+
+\vspace{3mm}
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|c|r|r|r|}
+		\hline
+		\rowcolor[HTML]{EFEFEF}
+		Descripción (IVA incluido) & \multicolumn{1}{c|}{\cellcolor[HTML]{EFEFEF}Unidades} & \multicolumn{1}{c|}{\cellcolor[HTML]{EFEFEF}Coste unitario (€)} & \multicolumn{1}{c|}{\cellcolor[HTML]{EFEFEF}Coste total (€)} \\ \hline
+		Material Hardware & 1 & 5096,00 & 5096,00 \\ \hline
+		Material Software & 1 & 300,00 & 300,00 \\ \hline
+		Mano de obra & 600 & 15,00 & 9000,00 \\ \hline
+		Costes fijos (Luz, Internet) & 1 & 300,00 & 300,00 \\ \hline
+		\rowcolor[HTML]{FFFFC7}
+		\textbf{TOTAL}  & \multicolumn{3}{r|}{\cellcolor[HTML]{FFFFC7}\textbf{14696,00€}} \\ \hline
+	\end{tabular}
+	\caption{Presupuesto total con IVA}
+	\label{tab:budget}
+\end{table}
+

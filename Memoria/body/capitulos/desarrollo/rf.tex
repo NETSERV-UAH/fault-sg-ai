@@ -1,0 +1,362 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Random Forest (\acrshort{rf})}
+\label{sec:rf}
+
+\subsubsection{Puntuación de características}
+\label{sec:rf1}
+
+Se desarrolla una primera versión del clasificador basado en la técnica de \gls{rf}, \textit{RandomForestClassifier()} \cite{rfsklearn}, para visualizar las características que más repercuten en el proceso de clasificación de errores. En este modelo por defecto, se construyen un total de 10 estimadores o árboles y se determina el criterio de medición de la impureza a partir de la entropía (ver Sección \ref{sec:mlrf}). Después, se aplican dos métodos diferentes para puntuar la importancia que toman las características en el clasificador anterior. 
+
+\vspace{3mm}
+
+\begin{lstlisting}[style=Python, caption={Clasificador RF por defecto}]
+  classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0) 
+  classifier.fit(X_train, y_train)
+\end{lstlisting}
+  
+\vspace{3mm}
+
+Por un lado, se estima la importancia de las características del conjunto, a partir del atributo \textit{feature\_importances\_}, proporcionado por el clasificador. En este caso, el cálculo se realiza a partir de la media y de la desviación estándar de la disminución de la impureza que se produce dentro de cada árbol. Como se representa en la Figura \ref{fig:imp1}, se devuelve un array con los valores de importancia relativa asignados a las características y cuyo sumatorio es igual a 1. En este caso, se visualiza una gran incidencia de la distancia, seguida de los parámetros resultantes de \gls{den2ne}, \textit{total\_balance} y \textit{abs\_flux}, que hacen referencia a la carga que presenta el nodo \textit{gateway} tras el balance y al flujo total de recursos intercambiados en el proceso de distribución energética.
+
+\pagebreak
+
+Sin embargo, con este método surge cierto sesgo hacia las características que presentan alta cardinalidad, o en otros términos, una gran cantidad de valores únicos. Esto se debe a que generan nodos de división con mayor profundidad en los árboles, puesto que existen más opciones de separación del conjunto de datos. Por lo tanto, este tipo de características pueden recibir una puntuación más inflada.
+
+\vspace{3mm}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{img/desarrollo/rf/importance1.png}
+  \caption{Puntuación de características del \acrshort{rf} mediante el atributo \textit{feature\_importances\_}}
+  \label{fig:imp1}
+\end{figure}
+
+\vspace{3mm}
+
+Teniendo esto en cuenta, se decide cuantificar la importancia también por el método de permutación (\textit{permutation\_importance}) \cite{importance}. Como se puede ver en la Figura \ref{fig:imp2}, en este caso, los parámetros resultantes de \gls{den2ne}, \textit{total\_balance} y \textit{abs\_flux}, siguen presentando puntuaciones altas, pero ahora también, las longitudes de las etiquetas de los nodos y la capacidad del enlace.
+
+\vspace{4mm}
+
+En este segundo método, los valores de las características se permutan una a una aleatoriamente y se evalúa en cada iteración los resultados del clasificador. Por tanto, cuando la variación de valores de una característica decrementa de forma considerable la precisión del modelo, puntúa una mayor importancia. Esta técnica es útil porque proporciona una evaluación imparcial de la importancia de las características. 
+
+\newpage
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{img/desarrollo/rf/importance2.png}
+  \caption{Puntuación de características del \acrshort{rf} mediante el método \textit{permutation\_importance}}
+  \label{fig:imp2}
+\end{figure}
+
+\subsubsection{Optimización de hiperparámetros}
+\label{rf2}
+
+Los hiperparámetros de un modelo se definen como los parámetros de configuración o argumentos que son incluidos en el constructor de la clase del estimador o clasificador. En el caso del \gls{rf}, como ya se había introducido en el diseño del modelo por defecto, se pone el foco en dos hiperparámetros principales: el número de estimadores o árboles y el criterio de medición de la impureza. Para encontrar los valores que construyen el modelo óptimo de \gls{rf}, es preciso emplear la técnica \textit{Grid Search} \cite{gridsearch} y, específicamente, la clase \textit{GridSearchCV()} \cite{gridsearch2}. Esta realiza una búsqueda exhaustiva a partir de la definición de una cuadrícula de hiperparámetros para el estimador y extrae la combinación de valores que aporta una mayor precisión. Por ello, es necesario primero, definir en un diccionario una serie de valores para los dos hiperparámetros que se pretenden optimizar en el nuevo clasificador.
+
+\begin{lstlisting}[style=Python, caption={Cuadrícula de parámetros RF}]
+  param_grid = {
+    'n_estimators': [10, 25, 50, 75, 100],
+    'criterion': ['entropy', 'gini']
+  }
+\end{lstlisting}
+
+\vspace{3mm}
+
+Por consiguiente, se crea el objeto de la clase \textit{GridSearchCV()} y se determina el esquema de validación cruzada (\textit{cross validation}) de este mediante el parámetro \textit{cv}. En este caso, toma un valor de 5 y define el número de pliegues (\textit{folds}) que se van a utilizar para dividir el conjunto de datos y evaluar las combinaciones de los hiperparámetros. De la misma forma, se especifican el resto de parámetros, como la métrica para evaluar el rendimiento del modelo en cada iteración, que viene dada por la precisión global obtenida (\textit{accuracy}). 
+
+\vspace{3mm}
+
+Una vez creado el objeto, se ajusta al conjunto de datos de entrenamiento. Este proceso, a partir de los atributos \textit{best\_score\_} y \textit{best\_params\_}, aporta a la salida cuál es la mejor combinación de parámetros de todas las probadas y qué valor de precisión alcanza la misma. En este caso, se obtiene una precisión del 99,18\% con un clasificador basado en 100 estimadores y en el criterio de entropía. 
+
+\vspace{3mm}
+
+\begin{lstlisting}[style=Python, caption={Construcción del objeto \textit{GridSearchCV()}}]
+  grid_search = GridSearchCV(estimator = classifier,
+                            param_grid = param_grid,
+                            scoring = 'accuracy',
+                            cv = 5,
+                            n_jobs = -1)
+
+  grid_search.fit(X_train, y_train)
+\end{lstlisting}
+
+\vspace{3mm}
+
+Sin embargo, para llevar a cabo un análisis en mayor profundidad de los resultados, se hace uso del atributo \textit{cv\_results\_}, que proporciona un diccionario con toda la información útil de la búsqueda. Principalmente, este análisis se centra en los valores de precisión obtenidos de todos los modelos y en los tiempos promedios que han sido necesarios para ajustar los mismos al conjunto de entrenamiento. Como se puede apreciar en la Tabla \ref{tab:rfgs}, se presentan variaciones muy pequeñas en los valores de precisión obtenida (\textit{mean\_test\_score}) para las diferentes combinaciones de parámetros.
+
+\vspace{3mm}
+
+No obstante, en el caso de los tiempos (\textit{mean\_fit\_time}), como es coherente, sí que se observan grandes diferencias. En la Tabla \ref{tab:rfgs2} se visualiza cómo se incrementa la duración de la búsqueda proporcionalmente al número de estimadores que se emplea. Esta métrica es importante también tenerla en cuenta para determinar el modelo óptimo, ya que a partir de la aplicación de 25 estimadores, la precisión no mejora de forma considerable. Por lo tanto, tras analizar los resultados, se puede expresar de forma concluyente que la mejor opción de modelo a emplear viene dada por un \gls{rf} basado en 25 estimadores o árboles y en el criterio de medición de la impureza a partir de la entropía.
+
+\vspace{3mm}
+
+\begin{table}[H]
+  \centering
+  \begin{subtable}{0.45\linewidth}
+    \centering
+    \begin{tabular}{|>{\columncolor[HTML]{EFEFEF}}c |c|c|}
+      \hline
+      \textit{\begin{tabular}[c]{@{}c@{}}Criterio /\\ Nº estimadores\end{tabular}} & \cellcolor[HTML]{EFEFEF}\textit{Entropía} & \cellcolor[HTML]{EFEFEF}\textit{Gini} \\ \hline
+      10 & 99,07 & 99,02 \\ \hline
+      25 & 99,16 & 99,14 \\ \hline
+      50 & 99,16 & 99,15 \\ \hline
+      75 & 99,17 & 99,17 \\ \hline
+      100 & 99,18 & 99,16 \\ \hline
+    \end{tabular}
+    \caption{Precisión (\%) (\textit{mean\_test\_score})}
+    \label{tab:rfgs}
+  \end{subtable}
+  \hfill
+  \begin{subtable}{0.45\linewidth}
+    \centering
+    \begin{tabular}{|>{\columncolor[HTML]{EFEFEF}}c |c|c|}
+      \hline
+      \textit{\begin{tabular}[c]{@{}c@{}}Criterio /\\ Nº Estimadores\end{tabular}} & \cellcolor[HTML]{EFEFEF}\textit{Entropía} & \cellcolor[HTML]{EFEFEF}\textit{Gini} \\ \hline
+      10 & 147 & 146 \\ \hline
+      25 & 373 & 382 \\ \hline
+      50 & 747 & 761 \\ \hline
+      75 & 1072 & 1002 \\ \hline
+      100 & 1439 & 987 \\ \hline
+    \end{tabular}
+    \caption{Tiempo (s) (\textit{mean\_fit\_time})}
+    \label{tab:rfgs2}
+  \end{subtable}
+  \caption{Resultados extraídos del atributo \textit{cv\_results\_} del \textit{Grid Search} en el \acrshort{rf}}
+  \label{tab:rfgs_combined}
+\end{table}
+
+\subsubsection{Selección de características}
+\label{sec:rf3}
+
+El proceso de selección de características viene dado por la necesidad de reducir las dimensiones del conjunto de datos y eliminar la información irrelevante o redundante que introduce ruido en el conjunto. En esta Sección, se expone el empleo de tres técnicas diferentes con el fin de realizar posteriormente un análisis comparativo de los resultados que se obtienen tras aplicar cada una de ellas al conjunto de datos (ver Sección \ref{sec:rf4}).
+
+\vspace{3mm}
+
+En primer lugar, se introduce la técnica de eliminación recursiva de características con validación cruzada (del inglés \gls{rfecv}) \cite{rfecv}. Esta técnica se basa en la ejecución de un proceso iterativo para ir desechando las características que tienen menor influencia en los resultados de precisión, hasta que el rendimiento del modelo deja de mejorar significativamente. Por este motivo, además de proveer a su salida la lista de características más importantes, es capaz de indicar cuál es el número óptimo de características que se debería aplicar para maximizar la precisión en el entrenamiento del modelo, a la vez que se minimiza el volumen de datos en el mismo. En este caso, el \gls{rfecv} se configura con 5 divisiones (\textit{cv}) del conjunto de datos para llevar a cabo el proceso de evaluación. Además, se determina la eliminación de una de las características disponibles en cada iteración (\textit{step}). 
+
+\vspace{3mm}
+
+\begin{lstlisting}[style=Python, caption={Aplicación del \acrshort{rfecv}}]
+  rfecv = RFECV(estimator=classifier, step=1, cv=5, scoring='accuracy') 
+  rfecv = rfecv.fit(X_train, y_train)
+\end{lstlisting}
+
+\vspace{3mm}
+
+\begin{lstlisting}[language=bash, style=Python, caption={Resultados del \acrshort{rfecv}}]
+  Nº óptimo de features : 8
+  Selected features : Index(['cap', 'dist', 'origen_id', 'dest_id', 'len_origen_tag', 'len_dest_tag', 'total_balance', 'abs_flux'], dtype='object')
+\end{lstlisting}
+
+\vspace{3mm}
+
+Se puede visualizar el proceso de evaluación del número de características gráficamente en la Figura \ref{fig:rfecv}, en la cual se representa cómo la precisión del modelo es máxima cuando se emplean 8. Por otro lado, en cuanto a la lista de características proporcionada por el \gls{rfecv}, es preciso llevar a cabo una comparación con las puntuaciones obtenidas en la Sección \ref{sec:rf1}. Volviendo a las Figuras \ref{fig:imp1} y \ref{fig:imp2}, se confirma que, exceptuando ligeras variaciones, la lista de características es coherente con las que presentan mayor grado de importancia.
+
+\vspace{3mm}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{img/desarrollo/rf/rfecv.png}
+  \caption{Análisis de la precisión del modelo en función del número de características empleadas}
+  \label{fig:rfecv}
+\end{figure}
+
+Por consiguiente, se entra en el funcionamiento de la segunda técnica a emplear, denominada como Selección Invariante de Características (del inglés \textit{Univariate feature selection}) o, también denominado, \textit{kBest} \cite{kbest}. En este caso, la operativa incluye un escalado previo de las características, para que sus valores se sitúen en un rango [0, 1]. 
+
+\vspace{3mm}
+
+Después, se declara el objeto de la clase especificada para la técnica en cuestión, \textit{SelectKBest()}, y se determina cuántas características se pretenden seleccionar del total que provee el conjunto. A diferencia del \gls{rfecv}, para conocer cuál es el número óptimo en la selección invariante de características, es preciso basarse en la prueba y error, puesto que no se proporciona este dato a la salida. Por ello, a modo comparativo, se produce el entrenamiento del conjunto de datos en base a k=5 y a k=8 características. 
+
+\vspace{3mm}
+
+\begin{lstlisting}[style=Python, caption={Aplicación del \textit{kBest}}]
+  scaler = MinMaxScaler() # Escalado de las características en el rango [0, 1]
+  kbest = SelectKBest(chi2, k=8)
+  kbest = kbest.fit(scaler.fit_transform(X_train), y_train)
+\end{lstlisting}
+
+\vspace{3mm}
+
+Una vez que se extraen aquellas características con mayor puntuación, a partir del atributo \textit{feature\_names\_in}, se procede a transformar los conjuntos de entrenamiento y de test. Si se compara la lista proporcionada por el atributo anterior con las puntuaciones de las Figuras \ref{fig:imp1} y \ref{fig:imp2}, se puede comprobar que esta técnica no es tan precisa como en el caso del \gls{rfecv}, puesto que se seleccionan algunas características que no presentan tan buenas puntuaciones. Con ello, se podría estimar, a priori, que la implementación de la selección invariante no mejorará los resultados de precisión que se esperan con \gls{rfecv}.
+
+\vspace{3mm}
+
+\begin{lstlisting}[language=bash, style=Python, caption={Resultados del \textit{kBest} para \textit{k=8}}]
+  Selected features : Index(['cap', 'len_origen_tag', 'len_dest_tag', 'degree', 'abs_flux', 'Beam Irradiance (W/m2)', 'Plane of Array Irradiance (W/m2)', 'Cell Temperature (C)'], dtype='object')       
+\end{lstlisting}
+
+\vspace{3mm}
+
+Por último, se introduce una técnica, que no es estrictamente de selección de características, pero que se incluye en esta Sección, puesto que el objetivo que se persigue viene dado por la reducción de la dimensionalidad del conjunto de datos. Se denomina como Análisis de Componentes Principales (del inglés \gls{pca}) \cite{pca} y se basa en la aplicación de la técnica matemática de Descomposición en Valores Singulares (del inglés \gls{svd}). Es decir, su funcionamiento consiste en la búsqueda de las direcciones principales de variación (k vectores) del conjunto de datos para construir una matriz de proyección, que establezca un nuevo espacio de características de k dimensiones.
+
+\vspace{3mm}
+
+No obstante, antes de aplicar el ajuste y la transformación al conjunto de datos a partir del \gls{pca}, se debe configurar el número de componentes a emplear. Para ello, se utiliza el ``método del codo" (del inglés \textit{Elbow Method}) con el fin de identificar el punto o ``codo" en el que el aumento del número de componentes no aporta mejoras significativas en el valor de la varianza. Como se representa en la Figura \ref{fig:pca}, en n=4 componentes, se produce el estancamiento más considerable de la varianza, en un valor del 6\% aproximadamente. Se puede visualizar que, para el caso de n=2 componentes, también ocurre pero en menor medida. Entonces, a modo comparativo, se considerará aplicar el \gls{pca} en función de ambos números.
+
+\vspace{3mm}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{img/desarrollo/pca.png}
+  \caption{Análisis de la varianza en función del número de componentes empleadas en el \acrshort{pca}}
+  \label{fig:pca}
+\end{figure}
+
+
+\subsubsection{Ejecución del modelo y evaluación de resultados}
+\label{sec:rf4}
+
+Por un lado, como se ha detallado en la Sección \ref{rf2}, el modelo que se considera más adecuado y, por tanto, sobre el que se decide trabajar, viene dado por la configuración de 25 estimadores y el criterio de la entropía. Por otro lado, en la Sección \ref{sec:rf3}, se han expuesto varias propuestas de selección de características o de reducción de dimensiones del conjunto de datos. 
+
+\vspace{3mm}
+
+\begin{lstlisting}[style=Python, caption={Clasificador RF seleccionado}]
+  classifier = RandomForestClassifier(n_estimators = 25, criterion = 'entropy', random_state = 0) 
+  classifier.fit(X_train, y_train)
+\end{lstlisting}
+  
+\vspace{3mm}
+
+La presente Sección viene dada por la necesidad de aplicar un proceso de evaluación sobre las diferentes implementaciones del modelo de \gls{rf} seleccionado con el fin de analizar el rendimiento y precisión que proporcionan cada una de ellas. En primera instancia, se va a proceder a ejecutar el modelo de \gls{rf}, tanto empleando las diferentes opciones de reducción de dimensiones del conjunto de datos, como sin aplicar ninguna de ellas con el objetivo de realizar la comparativa. A modo de proveer una mayor comprensión del entrenamiento que se produce, se incluye la lógica de representación de los estimadores o árboles de decisión del \gls{rf}, mediante el empleo del método de conversión \textit{export\_graphviz} \cite{graphviz2} y la herramienta de generación de grafos, \textit{WebGraphViz}. En la Figura \ref{fig:tree} se expone uno de los árboles que se construyen en este proceso.
+
+\vspace{3mm}
+
+Por consiguiente, una vez ejecutado, se puede llevar a cabo el proceso de evaluación, que consta de dos métodos: la matriz de confusión y el \textit{K-Fold Cross Validation}. La matriz de confusión \cite{cm} es un método de gran utilidad cuando se trabaja con técnicas de clasificación binaria, como se produce en este caso, para detectar y predecir los intercambios energéticos con errores. Permite analizar la precisión del modelo mediante la organización de las predicciones en cuatro categorías diferentes (ver Figura \ref{fig:confusion}): 
+
+\begin{itemize}
+  \item Verdaderos positivos (TP): Predicciones correctas de intercambios con errores.
+  \item Falsos positivos (FP): Predicciones incorrectas de intercambios con errores.
+  \item Verdaderos negativos (TN): Predicciones correctas de intercambios sin errores.
+  \item Falsos negativos (FN): Predicciones incorrectas de intercambios sin errores.
+\end{itemize}
+
+\begin{sidewaysfigure}
+  \centering
+  \includegraphics[width=1\textwidth]{img/desarrollo/rf/tree2.png}
+  \caption{Ejemplo gráfico de un estimador o árbol del \acrshort{rf} \cite{graphviz}}
+  \label{fig:tree}
+\end{sidewaysfigure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.45\textwidth]{img/desarrollo/rf/confusion.png}
+  \caption{Matriz de confusión \cite{cm2}}
+  \label{fig:confusion}
+\end{figure}
+
+\vspace{3mm}
+
+A través de las categorías definidas en la matriz, se pueden obtener cuatro métricas de evaluación: 
+
+\vspace{3mm}
+
+\begin{itemize}
+  \item \textit{Accuracy}: Mide la proporción de predicciones correctas en relación con el total y evalúa el rendimiento general de un modelo de clasificación.
+  
+  \begin{equation}
+    \begin{aligned}
+      \textit{Accuracy} = \frac{{TP + TN}}{{TP + TN + FP + FN}}
+    \end{aligned}
+  \end{equation}
+
+\pagebreak 
+
+  \item \textit{Precision}: Mide la proporción de verdaderos positivos entre todas las instancias clasificadas como positivas.
+  
+  \begin{equation}
+    \begin{aligned}
+      \text{Precision} = \frac{{TP}}{{TP + FP}}
+    \end{aligned}
+  \end{equation}
+
+  \item \textit{Recall}: Mide la proporción de verdaderos positivos identificados correctamente entre todas las instancias que son realmente positivas. 
+  
+  \begin{equation}
+    \begin{aligned}
+      \text{Recall} = \frac{{TP}}{{TP + FN}}
+    \end{aligned}
+  \end{equation}
+
+  \item \textit{F1 Score}: Combina las dos métricas anteriores, tomando en cuenta tanto los falsos positivos como los falsos negativos.
+  
+  \begin{equation}
+    \begin{aligned}
+      \text{F1 Score} = \frac{{2 \times \text{Precision} \times \text{Recall}}}{{\text{Precision} + \text{Recall}}}
+    \end{aligned}
+  \end{equation}
+  
+\end{itemize}
+
+\begin{lstlisting}[style=Python, caption={Implementación de la matriz de confusión}]
+  cm = confusion_matrix(y_test, y_pred)
+  accuracy_score(y_test, y_pred)
+\end{lstlisting}
+
+\vspace{3mm}
+
+Por tanto, con la aplicación de la matriz de confusión, se extraen los resultados expuestos en la Tabla \ref{tab:rfcm}. En la misma, se puede visualizar la cantidad de predicciones, en función de cada una de las categorías de la matriz y los valores obtenidos del cálculo de las métricas anteriores. A priori, si solo se pone el foco en la precisión global del modelo (\textit{Accuracy}), las opciones que proveen valores más altos son la que no aplica ningún método de reducción de dimensiones y que por tanto, opera con todas las características del conjunto, y la que emplea la técnica \gls{rfecv}. 
+
+\vspace{3mm}
+
+En el caso de la precisión de los valores positivos (\textit{Precision}) o, en otros términos, de las instancias que se predicen como erróneas, vuelve a ocurrir de la misma manera. A pesar de que para la métrica \textit{Accuracy} los valores de todas las opciones son relativamente parecidos, para \textit{Precision} se visualizan grandes diferencias. Por ejemplo, el empleo de un \gls{pca} con n=2 provee un buen valor de precisión global (97,55\%), pero no tiene un buen rendimiento en la clasificación de los errores (12,52\%). En consecuencia, el valor del \textit{Recall} también es muy pequeño en este caso (0,67\%). El resto de opciones, exceptuando las dos primeras, ya mencionadas anteriormente, presentan también porcentajes bajos, suponiendo un coste alto de predicción de errores. 
+
+\vspace{3mm}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+  \hline
+  \rowcolor[HTML]{EFEFEF} 
+  \textit{\begin{tabular}[c]{@{}c@{}}Matriz\\ de confusión\end{tabular}} & \cellcolor[HTML]{EFEFEF}\textit{TN} & \textit{FP} & \textit{FN} & \textit{TP} & \textit{Accuracy} & \textit{Precision} & \textit{Recall} & \textit{F1 Score} \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{Sin aplicar} & 376745 & 399 & 2332 & 6732 & 99,29 & 94,40 & 74,27 & 83,16 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{RFECV} & 376699 & 445 & 1717 & 7347 & 99,44 & 94,28 & 81,05 & 87,17 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{kbest (n=5)} & 376555 & 589 & 7927 & 1137 & 97,79 & 65,97 & 12,55 & 21,08 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{kbest (n=8)} & 375027 & 2117 & 6583 & 2481 & 97,74 & 53,95 & 27,37 & 36,32 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{PCA (n=2)} & 376718 & 426 & 9003 & 61 & 97,55 & 12,52 & 00,67 & 01,27 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{PCA (n=4)} & 376684 & 460 & 7015 & 2049 & 98,06 & 81,66 & 22,60 & 35,41 \\ \hline
+  \end{tabular}
+  \caption{Resultados de aplicación de la matriz de confusión al \acrshort{rf}}
+  \label{tab:rfcm}
+\end{table}
+
+\vspace{3mm}
+
+De la misma forma, se puede visualizar que para la métrica \textit{F1 Score} se esperan resultados relativamente cercanos al \textit{Recall}. Al considerarse tanto los falsos positivos, como los falsos negativos, produce que la obtención de un porcentaje significativamente pequeño indique una baja \textit{Precision} y \textit{Recall} conjuntamente. 
+
+\vspace{3mm}
+
+Por otro lado, en cuanto al método \textit{K-Fold Cross Validation} \cite{kfold}, se emplea la misma operativa que en el \textit{Grid Search}. Como su nombre indica, se basa en un esquema de validación cruzada (\textit{cross validation}) y se divide el conjunto de datos en un total de 5 pliegues para evaluar el rendimiento del modelo. En la Tabla \ref{tab:rfk}, se determinan los resultados de su aplicación y, como se puede visualizar, los valores de precisión global son prácticamente iguales a los obtenidos anteriormente en la matriz de confusión. 
+
+\vspace{3mm}
+
+Por tanto, mediante el empleo de las dos técnicas y el análisis expuesto, se puede confirmar definitivamente que las opciones con mejores resultados hacen referencia a la que no se aplica ningún método de reducción de dimensiones y a la que emplea \gls{rfecv}, siendo esta última la que proporciona un rendimiento óptimo.
+
+\vspace{3mm}
+
+\begin{lstlisting}[style=Python, caption={Implementación del \textit{K-Fold Cross Validation}}]
+accuracies = cross_val_score(estimator = classifier, X = X_train, y = y_train, cv = 5)
+\end{lstlisting}
+
+\vspace{3mm}
+\clearpage
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+  \hline
+  \rowcolor[HTML]{EFEFEF} 
+  \textit{\begin{tabular}[c]{@{}c@{}}K-Fold\\ Cross Validation\end{tabular}} & \cellcolor[HTML]{EFEFEF}\textit{Accuracy (\%)} & \textit{Standard Deviation (\%)} \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{Sin aplicar} & 99,30 & 0,02 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{RFECV} & 99,47 & 0,02 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{kbest (n=5)} & 97,80 & 0,02 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{kbest (n=8)} & 97,79 & 0,01 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{PCA (n=2)} & 97,35 & 0,01 \\ \hline
+  \cellcolor[HTML]{EFEFEF}\textit{PCA (n=4)} & 98,04 & 0,00 \\ \hline
+  \end{tabular}
+  \caption{Resultados de aplicación del \textit{K-Fold Cross Validation} al \gls{rf}}
+  \label{tab:rfk}
+\end{table}
+
+
+
+
